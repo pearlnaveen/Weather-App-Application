@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather App</title>
+  <style>
+    /* ===== Simple Professional Weather App ===== */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #74ABE2, #000000);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+
+    .weather-card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px 40px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+      width: 320px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+
+    input {
+      padding: 10px;
+      width: 80%;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background-color: #fff;
+      color: #333;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #f1f1f1;
+    }
+
+    .info {
+      margin-top: 15px;
+    }
+
+    .temp {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+
+    .desc {
+      font-size: 1.2rem;
+      text-transform: capitalize;
+    }
+
+    .error {
+      color: #ffb3b3;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="weather-card">
+    <h1>🌤 Weather App</h1>
+    <input type="text" id="cityInput" placeholder="Enter city name..." />
+    <button id="getWeatherBtn">Get Weather</button>
+    <div class="info" id="weatherInfo"></div>
+    <div class="error" id="errorMsg"></div>
+  </div>
+
+  <script>
+    const apiKey = "Your_API_Key";
+    const weatherInfo = document.getElementById("weatherInfo");
+    const errorMsg = document.getElementById("errorMsg");
+    const cityInput = document.getElementById("cityInput");
+    const getWeatherBtn = document.getElementById("getWeatherBtn");
+
+    // Fetch weather by city name
+    async function fetchWeather(city) {
+      try {
+        errorMsg.textContent = "";
+        weatherInfo.innerHTML = "Loading...";
+        const response = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
+        );
+        if (!response.ok) throw new Error("City not found");
+        const data = await response.json();
+        displayWeather(data);
+      } catch (err) {
+        weatherInfo.innerHTML = "";
+        errorMsg.textContent = err.message;
+      }
+    }
+
+    // Fetch weather by geolocation
+    function fetchWeatherByLocation(lat, lon) {
+      fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+      )
+        .then(response => response.json())
+        .then(data => displayWeather(data))
+        .catch(() => {
+          errorMsg.textContent = "Unable to fetch location weather.";
+        });
+    }
+
+    // Display weather info
+    function displayWeather(data) {
+      const { name, main, weather } = data;
+      weatherInfo.innerHTML = `
+        <h2>${name}</h2>
+        <div class="temp">${main.temp}°C</div>
+        <div class="desc">${weather[0].description}</div>
+        <p>💧 Humidity: ${main.humidity}%</p>
+      `;
+    }
+
+    // Get user's location
+    window.onload = function() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            fetchWeatherByLocation(latitude, longitude);
+          },
+          () => {
+            errorMsg.textContent = "Location access denied. Please enter a city.";
+          }
+        );
+      } else {
+        errorMsg.textContent = "Geolocation not supported by this browser.";
+      }
+    };
+
+    // Button click event
+    getWeatherBtn.addEventListener("click", () => {
+      const city = cityInput.value.trim();
+      if (city) {
+        fetchWeather(city);
+        cityInput.value = "";
+      } else {
+        errorMsg.textContent = "Please enter a city name.";
+      }
+    });
+  </script>
+</body>
+</html>
